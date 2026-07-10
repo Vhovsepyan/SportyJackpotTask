@@ -113,6 +113,24 @@ Now `POST /api/bets` publishes each bet as JSON to the `jackpot-bets` topic; a
 
 Tear down with `docker compose down`.
 
+### Listener configuration note
+
+The broker runs in **combined broker + controller KRaft mode**. In that mode the
+controller listener is *not* advertised, so Kafka derives its advertised address
+from `listeners` — and binding it to `0.0.0.0` fails startup with:
+
+```
+advertised.listeners cannot use the nonroutable meta-address 0.0.0.0. Use a routable IP address.
+```
+
+So `docker-compose.yml` binds the broker listener to all interfaces (reachable
+from the host) but the controller listener to `localhost`:
+
+```yaml
+KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
+KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+```
+
 ---
 
 ## Design notes
