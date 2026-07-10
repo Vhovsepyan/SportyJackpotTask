@@ -45,6 +45,14 @@ public class ContributionService {
      */
     @Transactional
     public void processBet(Bet bet) {
+        // A betId identifies a single bet. Processing is at-least-once (HTTP retry
+        // or Kafka redelivery), so contributing is idempotent: a betId already
+        // seen is skipped rather than contributing to the pool twice.
+        if (contributionRepository.existsByBetId(bet.betId())) {
+            log.warn("Contribution for betId '{}' already recorded; skipping duplicate bet", bet.betId());
+            return;
+        }
+
         Optional<Jackpot> maybeJackpot = jackpotRepository.findById(bet.jackpotId());
         if (maybeJackpot.isEmpty()) {
             log.warn("No jackpot found for id '{}' (betId '{}'); skipping contribution",

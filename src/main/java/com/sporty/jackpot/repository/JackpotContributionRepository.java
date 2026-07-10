@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface JackpotContributionRepository extends JpaRepository<JackpotContribution, Long> {
 
     Optional<JackpotContribution> findByBetId(String betId);
+
+    boolean existsByBetId(String betId);
 }

@@ -31,7 +31,7 @@ public class JackpotContribution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String betId;
 
     @Column(nullable = false)

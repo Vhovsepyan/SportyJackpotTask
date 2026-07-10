@@ -90,4 +90,17 @@ class ContributionServiceTest {
         verify(jackpotRepository, never()).save(org.mockito.ArgumentMatchers.any());
         verify(contributionRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
+
+    @Test
+    void skipsDuplicateBetIdWithoutContributingTwice() {
+        // A bet whose betId was already recorded must be a no-op.
+        when(contributionRepository.existsByBetId("bet-1")).thenReturn(true);
+
+        Bet bet = new Bet("bet-1", "user-1", "jackpot-fixed", new BigDecimal("100.0000"));
+        service().processBet(bet);
+
+        verify(jackpotRepository, never()).findById(org.mockito.ArgumentMatchers.any());
+        verify(jackpotRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(contributionRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
 }
