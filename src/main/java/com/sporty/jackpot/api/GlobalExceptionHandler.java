@@ -3,6 +3,7 @@ package com.sporty.jackpot.api;
 import com.sporty.jackpot.api.dto.ErrorResponse;
 import com.sporty.jackpot.service.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +53,20 @@ public class GlobalExceptionHandler {
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.CONFLICT.value(), "Conflict",
                 "The jackpot was updated concurrently; please retry");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * A unique-constraint breach (e.g. two concurrent bets sharing a betId that
+     * both slip past the idempotency pre-check) is a duplicate/conflict, not a
+     * server fault. The sequential-duplicate case never reaches here — it is
+     * skipped cleanly by {@code ContributionService}.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        ErrorResponse body = ErrorResponse.of(
+                HttpStatus.CONFLICT.value(), "Conflict",
+                "Duplicate or conflicting record; the request may already have been processed");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 

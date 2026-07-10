@@ -71,4 +71,22 @@ class BetControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Malformed request body"));
     }
+
+    @Test
+    void duplicateBetIdConflictReturns409() throws Exception {
+        // A racing duplicate that trips the betId unique constraint surfaces as 409, not 500.
+        org.mockito.Mockito.doThrow(new org.springframework.dao.DataIntegrityViolationException("unique betId"))
+                .when(betPublisher).publish(org.mockito.ArgumentMatchers.any());
+
+        String body = """
+                {"betId":"bet-1","userId":"user-1","jackpotId":"jackpot-fixed","amount":100.00}
+                """;
+
+        mockMvc.perform(post("/api/bets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"));
+    }
 }

@@ -49,7 +49,8 @@ public class ContributionService {
         // or Kafka redelivery), so contributing is idempotent: a betId already
         // seen is skipped rather than contributing to the pool twice.
         if (contributionRepository.existsByBetId(bet.betId())) {
-            log.warn("Contribution for betId '{}' already recorded; skipping duplicate bet", bet.betId());
+            // Expected under at-least-once delivery / client retries — a benign no-op, not a warning.
+            log.info("Contribution for betId '{}' already recorded; skipping duplicate bet", bet.betId());
             return;
         }
 
